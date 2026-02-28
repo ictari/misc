@@ -1,0 +1,39 @@
+param (
+    [Parameter()]
+    [string]$Directory,
+    [Parameter()]
+    [string]$Operation
+)
+
+$ProgressPreference = 'SilentlyContinue'
+
+$ValidOperations = @('fetch','pull')
+if ($Operation -notin $ValidOperations) {
+    Write-Error "Unsupported operation: $Operation"
+    exit 1
+}
+
+if (-not (Test-Path $Directory)) {
+    Write-Error "Directory '$Directory' does not exist"
+    exit 1
+}
+
+if (-not (Test-Path (Join-Path $Directory ".git"))) {
+    Write-Error "Directory '$Directory' is not a git repository"
+    exit 1
+}
+
+Push-Location $Directory
+try {
+    Write-Host "Running 'git $Operation' in $Directory"
+    git $Operation
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "git $Operation failed with exit code $LASTEXITCODE"
+        exit $LASTEXITCODE
+    }
+} finally {
+    Pop-Location
+}
+
+Write-Host "Done running git $Operation"
+exit 0 #Success!
